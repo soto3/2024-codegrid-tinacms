@@ -5,37 +5,38 @@ import PostBody from "../../components/post-body";
 import Header from "../../components/header";
 import PostHeader from "../../components/post-header";
 import Layout from "../../components/layout";
-import { getPostBySlug, getAllPosts } from "../../lib/api";
+import { getAllPosts } from "../../lib/api";
 import PostTitle from "../../components/post-title";
 import Head from "next/head";
 import { CMS_NAME } from "../../lib/constants";
-import markdownToHtml from "../../lib/markdownToHtml";
-import type PostType from "../../interfaces/post";
+import client from "../../tina/__generated__/client";
+import { useTina } from "tinacms/dist/react";
+import { TinaMarkdown } from "tinacms/dist/rich-text";
+type Props = {};
 
-type Props = {
-  post: PostType;
-  morePosts: PostType[];
-  preview?: boolean;
-};
-
-export default function Post({ post, morePosts, preview }: Props) {
+export default function Post({ data, query, variables }: Props) {
   const router = useRouter();
-  const title = `${post.title} | Next.js Blog Example with ${CMS_NAME}`;
-  if (!router.isFallback && !post?.slug) {
-    return <ErrorPage statusCode={404} />;
-  }
+  const {
+    data: { post },
+  } = useTina({ data, query, variables });
+  // const title = `${tina.data.title} | Next.js Blog Example with ${CMS_NAME}`;
+  // if (!router.isFallback && !tina.data?.slug) {
+  //   return <ErrorPage statusCode={404} />;
+  // }
+  console.log();
+
   return (
-    <Layout preview={preview}>
+    <Layout preview={true}>
       <Container>
         <Header />
         {router.isFallback ? (
           <PostTitle>Loading…</PostTitle>
         ) : (
           <>
-            <article className="mb-32">
+            <article className='mb-32'>
               <Head>
-                <title>{title}</title>
-                <meta property="og:image" content={post.ogImage.url} />
+                <title>{post.title}</title>
+                <meta property='og:image' content={post.ogImage} />
               </Head>
               <PostHeader
                 title={post.title}
@@ -43,7 +44,7 @@ export default function Post({ post, morePosts, preview }: Props) {
                 date={post.date}
                 author={post.author}
               />
-              <PostBody content={post.content} />
+              <TinaMarkdown content={post.body} />
             </article>
           </>
         )}
@@ -59,38 +60,42 @@ type Params = {
 };
 
 export async function getStaticProps({ params }: Params) {
-  const post = getPostBySlug(params.slug, [
-    "title",
-    "date",
-    "slug",
-    "author",
-    "content",
-    "ogImage",
-    "coverImage",
-  ]);
-  const content = await markdownToHtml(post.content || "");
+  const { data, query, variables } = await client.queries.post({
+    relativePath: params.slug + ".md",
+  });
 
   return {
     props: {
-      post: {
-        ...post,
-        content,
-      },
+      data,
+      query,
+      variables,
     },
   };
 }
 
+// export async function getStaticPaths() {
+//   const posts = getAllPosts(["slug"]);
+
+//   console.log(posts);
+//   return {
+//     paths: posts.map((post) => {
+//       return {
+//         params: {
+//           slug: post.slug,
+//         },
+//       };
+//     }),
+//     fallback: false,
+//   };
+// }
+
 export async function getStaticPaths() {
-  const posts = getAllPosts(["slug"]);
+  const postsListData = await client.queries.postConnection();
 
   return {
-    paths: posts.map((post) => {
-      return {
-        params: {
-          slug: post.slug,
-        },
-      };
-    }),
+    paths: postsListData.data.postConnection.edges.map((post) => ({
+      params: { slug: post.node._sys.filename },
+    })),
     fallback: false,
   };
 }

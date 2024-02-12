@@ -91,6 +91,9 @@ export default defineConfig({
             isBody: true,
           },
         ],
+        ui: {
+          router: ({ document }) => `/posts/${document._sys.filename}`,
+        },
       },
     ],
   },
