@@ -1,29 +1,34 @@
 import { useRouter } from "next/router";
 import ErrorPage from "next/error";
 import Container from "../../components/container";
-import PostBody from "../../components/post-body";
 import Header from "../../components/header";
 import PostHeader from "../../components/post-header";
 import Layout from "../../components/layout";
-import { getAllPosts } from "../../lib/api";
 import PostTitle from "../../components/post-title";
 import Head from "next/head";
 import { CMS_NAME } from "../../lib/constants";
 import client from "../../tina/__generated__/client";
 import { useTina } from "tinacms/dist/react";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
-type Props = {};
+import { PostQuery } from "../../tina/__generated__/types";
+type Props = {
+  data: PostQuery;
+  variables: {
+    relativePath: string;
+  };
+  query: string;
+};
 
 export default function Post({ data, query, variables }: Props) {
   const router = useRouter();
   const {
     data: { post },
   } = useTina({ data, query, variables });
-  // const title = `${tina.data.title} | Next.js Blog Example with ${CMS_NAME}`;
-  // if (!router.isFallback && !tina.data?.slug) {
-  //   return <ErrorPage statusCode={404} />;
-  // }
-  console.log();
+
+  const title = `${post.title} | Next.js Blog Example with ${CMS_NAME}`;
+  if (!router.isFallback && !post) {
+    return <ErrorPage statusCode={404} />;
+  }
 
   return (
     <Layout preview={true}>
@@ -35,8 +40,8 @@ export default function Post({ data, query, variables }: Props) {
           <>
             <article className='mb-32'>
               <Head>
-                <title>{post.title}</title>
-                <meta property='og:image' content={post.ogImage} />
+                <title>{title}</title>
+                <meta property='og:image' content={post.ogImage.url} />
               </Head>
               <PostHeader
                 title={post.title}
@@ -72,23 +77,6 @@ export async function getStaticProps({ params }: Params) {
     },
   };
 }
-
-// export async function getStaticPaths() {
-//   const posts = getAllPosts(["slug"]);
-
-//   console.log(posts);
-//   return {
-//     paths: posts.map((post) => {
-//       return {
-//         params: {
-//           slug: post.slug,
-//         },
-//       };
-//     }),
-//     fallback: false,
-//   };
-// }
-
 export async function getStaticPaths() {
   const postsListData = await client.queries.postConnection();
 
