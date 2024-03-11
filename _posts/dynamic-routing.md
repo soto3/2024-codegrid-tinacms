@@ -1,5 +1,5 @@
 ---
-title: Dynamic Routing and Static Generation!!!
+title: Dynamic Routing and Static Generation?
 excerpt: >-
   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
   incididunt ut labore et dolore magna aliqua. Praesent elementum facilisis leo
